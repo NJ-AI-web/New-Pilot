@@ -22,7 +22,8 @@ def load_shop_data():
                 try:
                     with open(os.path.join("data", f), "r", encoding="utf-8") as file:
                         data[f.replace(".json", "")] = json.load(file)
-                except: pass
+                except: 
+                    pass
     return data
 
 def load_customers():
