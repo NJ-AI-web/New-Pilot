@@ -30,13 +30,18 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# API Key Check
-try:
-    api_key = st.secrets["GROQ_API_KEY"]
-    client = Groq(api_key=api_key)
-except:
-    st.error("🚨 Groq API Key Missing! (.streamlit/secrets.toml பார்க்கவும்)")
-    st.stop()
+# Fetch API Key from Render (os) or Streamlit (secrets)
+api_key = os.environ.get("GROQ_API_KEY")
+
+if not api_key:
+    try:
+        api_key = st.secrets["GROQ_API_KEY"]
+    except:
+        st.error("🚨 Groq API Key Missing! Render Environment Variables செக் செய்யவும்.")
+        st.stop()
+
+client = Groq(api_key=api_key)
+
 
 # 2. DATA MANAGEMENT (Shop, CRM, Logs) 💾
 
@@ -358,4 +363,5 @@ if prompt := st.chat_input("Ex: Annapurna Nepal History / Petrol Price"):
         if os.path.exists("reply.mp3"): os.remove("reply.mp3")
         asyncio.run(text_to_speech(response))
         st.audio("reply.mp3", format="audio/mp3", start_time=0)
+
     except: pass
