@@ -1,9 +1,6 @@
 import os
 import json
 import requests
-import random
-import re
-import asyncio
 import edge_tts
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -16,6 +13,8 @@ def load_shop_data():
     if not os.path.exists("data"):
         os.makedirs("data")
         return data
+    
+    # பிழை சரி செய்யப்பட்ட பகுதி 👇
     try:
         for f in os.listdir("data"):
             if f.endswith(".json"):
@@ -23,7 +22,10 @@ def load_shop_data():
                     with open(os.path.join("data", f), "r", encoding="utf-8") as file:
                         data[f.replace(".json", "")] = json.load(file)
                 except: 
-                    pass
+                    pass 
+    except:
+        pass # இந்த 'except' தான் மிஸ் ஆச்சு! இப்போ சேர்த்தாச்சு.
+        
     return data
 
 def load_customers():
@@ -35,7 +37,9 @@ def load_customers():
     except: return {}
 
 def save_customer(data):
-    with open("customers.json", "w") as f: json.dump(data, f, indent=4)
+    try:
+        with open("customers.json", "w") as f: json.dump(data, f, indent=4)
+    except: pass
 
 # --- 2. WEB SEARCH ENGINE ---
 def scrape_full_website(url):
@@ -58,11 +62,13 @@ def search_internet(query, deep_mode=False):
         results = []
         links = []
         for res in soup.find_all('div', class_='result__body', limit=3):
-            title = res.find('a', class_='result__a').text
-            link = res.find('a', class_='result__a')['href']
-            snippet = res.find('a', class_='result__snippet').text
-            results.append(f"Source: {title}\nSummary: {snippet}")
-            links.append(link)
+            try:
+                title = res.find('a', class_='result__a').text
+                link = res.find('a', class_='result__a')['href']
+                snippet = res.find('a', class_='result__snippet').text
+                results.append(f"Source: {title}\nSummary: {snippet}")
+                links.append(link)
+            except: continue
             
         if deep_mode and links:
             extra_content = scrape_full_website(links[0])
