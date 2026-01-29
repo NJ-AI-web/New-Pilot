@@ -19,16 +19,68 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS for Pro Look & Clean UI
+# --- High Class UI Styling ---
 st.markdown("""
 <style>
-    .stChatMessage { font-family: 'Sans-serif'; }
-    .stStatus { font-weight: bold; border-radius: 10px; border: 1px solid #ddd; }
-    /* Hide Streamlit Default Branding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    .stChatMessage {
+        background-color: #1E1E1E;
+        border-radius: 15px;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #333;
+    }
+    
+    div[data-testid="stChatMessage"]:nth-child(odd) {
+        background-color: #2b313e; 
+        border-left: 5px solid #4CAF50;
+    }
+    
+    div[data-testid="stChatMessage"]:nth-child(even) {
+        background-color: #111; 
+        border-left: 5px solid #FF5722;
+    }
+
+    div.stButton > button {
+        width: 100%;
+        border-radius: 20px;
+        background-color: #262730;
+        color: white;
+        border: 1px solid #4CAF50;
+    }
+    div.stButton > button:hover {
+        background-color: #4CAF50;
+        color: white;
+        border-color: #4CAF50;
+    }
 </style>
 """, unsafe_allow_html=True)
+
+# --- HEADER SECTION ---
+col1, col2 = st.columns([1, 5])
+with col1:
+    st.image("https://cdn-icons-png.flaticon.com/512/4712/4712035.png", width=60)
+with col2:
+    st.title("NJ Tech AI Assistant")
+    st.caption("🚀 Your Smart Mobile Partner | Live Market Rates")
+
+st.divider()
+
+# --- QUICK ACTION BUTTONS ---
+col_a, col_b, col_c = st.columns(3)
+
+if col_a.button("📉 Silver Rate"):
+    st.session_state.messages.append({"role": "user", "content": "Silver rate inniku evlo?"})
+
+if col_b.button("📱 Best 5G Phones"):
+    st.session_state.messages.append({"role": "user", "content": "Best 5G mobiles under 20k?"})
+
+if col_c.button("📍 Address"):
+    st.session_state.messages.append({"role": "user", "content": "Shop address kudunga boss"})
+
 
 # Fetch API Key from Render (os) or Streamlit (secrets)
 api_key = os.environ.get("GROQ_API_KEY")
@@ -365,3 +417,4 @@ if prompt := st.chat_input("Ex: Annapurna Nepal History / Petrol Price"):
         st.audio("reply.mp3", format="audio/mp3", start_time=0)
 
     except: pass
+
