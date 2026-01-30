@@ -94,10 +94,84 @@ if mode == "🔐 Admin Panel":
     if pwd == "admin123": # Password
         st.success("Access Granted ✅")
         
-        tab1, tab2, tab3 = st.tabs(["📂 Update Stock", "📝 View Logs", "👥 Customers"])
+        # Tabs பிரிச்சாச்சு: Stock Manager, Bulk Upload, Logs
+        tab1, tab2, tab3 = st.tabs(["📦 Stock Manager", "📂 Bulk Upload", "📝 View Logs"])
         
+        # --- TAB 1: STOCK MANAGER (Add, Edit, Delete) ---
         with tab1:
-            st.subheader("Upload Shop Data")
+            st.subheader("Manage Mobile Stock")
+            
+            # Load Data
+            current_data = logic.load_shop_data()
+            if not current_data: current_data = {} # Empty if no file
+
+            # Option 1: ✏️ EDIT PRICE & STOCK (விலை & ஸ்டாக் மாத்த)
+            with st.expander("✏️ Edit Existing Item (Price/Status)", expanded=True):
+                product_list = list(current_data.keys())
+                if product_list:
+                    edit_item = st.selectbox("Select Item to Edit:", product_list, key="edit_sel")
+                    details = current_data[edit_item]
+                    
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        new_price = st.text_input("New Price (₹):", value=str(details.get("price", "0")))
+                    with c2:
+                        new_status = st.selectbox("Stock Status:", ["Available", "Low Stock", "Out of Stock"], index=0)
+                    
+                    if st.button("💾 Update Item"):
+                        current_data[edit_item]["price"] = new_price
+                        current_data[edit_item]["stock"] = new_status
+                        # Save
+                        with open("data/mobile.json", "w", encoding="utf-8") as f:
+                            json.dump(current_data, f, indent=4)
+                        st.success(f"✅ Updated {edit_item}!")
+                        time.sleep(1)
+                        st.rerun()
+                else:
+                    st.info("No items found. Add new item below.")
+
+            # Option 2: ➕ ADD NEW ITEM (புது போன் சேர்க்க)
+            with st.expander("➕ Add New Product"):
+                c_new1, c_new2 = st.columns(2)
+                with c_new1:
+                    add_name = st.text_input("Product Name (Ex: Redmi Note 13):")
+                with c_new2:
+                    add_price = st.text_input("Price (Ex: 15999):")
+                
+                add_desc = st.text_area("Specs / Description (Tanglish ok):", "8GB RAM, 128GB Storage, 108MP Camera")
+                
+                if st.button("🚀 Add to Stock"):
+                    if add_name and add_price:
+                        current_data[add_name] = {
+                            "price": add_price,
+                            "specs": add_desc,
+                            "stock": "Available"
+                        }
+                        # Save
+                        with open("data/mobile.json", "w", encoding="utf-8") as f:
+                            json.dump(current_data, f, indent=4)
+                        st.success(f"✅ Added {add_name} Successfully!")
+                        time.sleep(1)
+                        st.rerun()
+                    else:
+                        st.error("Name & Price kudasuthunga boss!")
+
+            # Option 3: 🗑️ DELETE ITEM (பழைய ஸ்டாக் நீக்க)
+            with st.expander("🗑️ Delete Product"):
+                if product_list:
+                    del_item = st.selectbox("Select Item to Remove:", product_list, key="del_sel")
+                    if st.button("❌ Remove Permanently"):
+                        del current_data[del_item]
+                        # Save
+                        with open("data/mobile.json", "w", encoding="utf-8") as f:
+                            json.dump(current_data, f, indent=4)
+                        st.warning(f"🗑️ Deleted {del_item}!")
+                        time.sleep(1)
+                        st.rerun()
+
+        # --- TAB 2: BULK UPLOAD (Old Feature) ---
+        with tab2:
+            st.subheader("Upload Full JSON Files")
             col1, col2 = st.columns(2)
             with col1:
                 st.info("Mobile Json")
@@ -112,14 +186,17 @@ if mode == "🔐 Admin Panel":
                     with open("data/shop_info.json", "wb") as f: f.write(up2.getbuffer())
                     st.success("Updated!")
                     
-        with tab2:
+        # --- TAB 3: LOGS ---
+        with tab3:
             if os.path.exists("chat_logs.json"):
-                st.json(pd.read_json("chat_logs.json").head(10).to_dict())
+                try: st.json(pd.read_json("chat_logs.json").head(10).to_dict())
+                except: st.write("Log format error")
             else: st.warning("No logs yet.")
             
     elif pwd:
         st.error("Wrong Password!")
     st.stop() # Stop here if Admin
+
 
 # === CUSTOMER CHAT MODE ===
 col_h1, col_h2 = st.columns([1,5])
@@ -165,3 +242,4 @@ if prompt := st.chat_input("Ask about Mobile, Price, or Offers..."):
     if audio_file:
         st.audio(audio_file, format="audio/mp3")
         
+
