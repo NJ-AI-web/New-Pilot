@@ -13,19 +13,14 @@ def load_shop_data():
     if not os.path.exists("data"):
         os.makedirs("data")
         return data
-    
-    # பிழை சரி செய்யப்பட்ட பகுதி 👇
     try:
         for f in os.listdir("data"):
             if f.endswith(".json"):
                 try:
                     with open(os.path.join("data", f), "r", encoding="utf-8") as file:
                         data[f.replace(".json", "")] = json.load(file)
-                except: 
-                    pass 
-    except:
-        pass # இந்த 'except' தான் மிஸ் ஆச்சு! இப்போ சேர்த்தாச்சு.
-        
+                except: pass 
+    except: pass
     return data
 
 def load_customers():
@@ -77,44 +72,50 @@ def search_internet(query, deep_mode=False):
         return "\n".join(results) if results else "No Data Found."
     except: return "Search Error."
 
-# --- 3. AI BRAIN (The Response Generator) ---
-def ask_bot(query, context_text, deep_mode=False):
-    # API Key Handling
+# --- 3. AI BRAIN (With MEMORY POWER 🧠) ---
+# history parameter சேர்க்கப்பட்டுள்ளது 👇
+def ask_bot(query, context_text, history, deep_mode=False):
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
         try: api_key = st.secrets["GROQ_API_KEY"]
         except: return "🚨 Error: API Key Missing!"
     
     client = Groq(api_key=api_key)
-    
-    # Contexts
     shop_data = load_shop_data()
     web_data = ""
     
-    # Keywords that trigger Internet Search
+    # Internet Search Logic
     search_triggers = ["price", "rate", "gold", "silver", "news", "today", "latest", "review", "best"]
     if any(x in query.lower() for x in search_triggers) or deep_mode:
         web_data = search_internet(query, deep_mode)
     
     date_str = datetime.now().strftime("%d-%b-%Y")
     
-    # System Prompt (Tanglish & Rules)
+    # 🧠 HISTORY FORMATTING (இதுதான் முக்கியம்!)
+    # பழைய மெசேஜ்களை AI-க்கு புரியுற மாதிரி மாத்துறோம்
+    chat_history_txt = ""
+    for msg in history[-5:]: # கடைசி 5 மெசேஜ் மட்டும் போதும்
+        role = "User" if msg["role"] == "user" else "Assistant"
+        chat_history_txt += f"{role}: {msg['content']}\n"
+
+    # System Prompt Update
     system_prompt = f"""
-    Role: You are 'NJ Tech AI', a friendly Shop Assistant.
+    Role: You are 'NJ Tech AI', a smart & friendly Mobile Shop Assistant in Erode.
     Today: {date_str}.
     
-    DATA SOURCES:
-    1. SHOP STOCK: {json.dumps(shop_data)}
-    2. INTERNET DATA: {web_data}
-    3. USER CONTEXT: {context_text}
+    CONTEXT DATA:
+    1. 🧠 PREVIOUS CHAT HISTORY: 
+    {chat_history_txt}
+    
+    2. 🏪 SHOP STOCK: {json.dumps(shop_data)}
+    3. 🌐 WEB DATA: {web_data}
+    4. 👤 USER INFO: {context_text}
     
     RULES:
-    1. **Tanglish Only:** Speak like a Tamil Nadu shop owner (Tamil + English mix).
-       - Bad: "The price is 100."
-       - Good: "Rate 100 ruba boss. Quality mass ah irukum."
-    2. **Direct Answer:** If you searched for Rate/Price, tell the number directly. DO NOT give links.
-    3. **Stock Check:** If user asks for mobile, check SHOP STOCK first.
-    4. **Safety:** Don't answer illegal topics.
+    1. **STABILITY:** Stick to the topic. If user asks "What did we discuss?", look at HISTORY.
+    2. **Tanglish:** Speak strictly in Tamil+English mix (Tanglish).
+    3. **Direct Answers:** For Gold/Silver rates, give the number directly from WEB DATA.
+    4. **Short & Sweet:** Don't give long lectures unless asked.
     """
     
     try:
@@ -124,7 +125,7 @@ def ask_bot(query, context_text, deep_mode=False):
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": query}
             ],
-            temperature=0.7,
+            temperature=0.6, # குறைக்கப்பட்டது - இது பதிலை Stable ஆக்கும்
             max_tokens=1000
         )
         return completion.choices[0].message.content
@@ -140,4 +141,4 @@ async def text_to_speech_edge(text):
         await communicate.save(output)
         return output
     except: return None
-                    
+                
