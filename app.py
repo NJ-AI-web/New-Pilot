@@ -229,7 +229,7 @@ if prompt := st.chat_input("Ask about Mobile, Price, or Offers..."):
     with st.chat_message("assistant"):
         with st.spinner("Checking..."):
             # Call Logic File
-            response = logic.ask_bot(prompt, user_info, deep_mode)
+            response = logic.ask_bot(prompt, user_info,st.session_state.messages, deep_mode)
             st.markdown(response)
             
             # Optional: Log the chat
@@ -242,4 +242,5 @@ if prompt := st.chat_input("Ask about Mobile, Price, or Offers..."):
     if audio_file:
         st.audio(audio_file, format="audio/mp3")
         
+
 
